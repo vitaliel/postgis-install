@@ -1,0 +1,12 @@
+SELECT install_missing_indexes();
+vacuum analyze tiger.addr;
+vacuum analyze tiger.edges;
+vacuum analyze tiger.faces;
+vacuum analyze tiger.featnames;
+vacuum analyze tiger.place;
+vacuum analyze tiger.cousub;
+vacuum analyze tiger.county;
+vacuum analyze tiger.state;
+vacuum analyze tiger.zip_lookup_base;
+vacuum analyze tiger.zip_state;
+vacuum analyze tiger.zip_state_loc;
