@@ -1,3 +1,5 @@
 temp/
 www2.census.gov/
 ftp2.census.gov
+# file to override db access
+config-local.sh

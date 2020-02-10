@@ -1,5 +1,5 @@
 
-# Congretional districts
+# Congressional districts
 
 set -e
 

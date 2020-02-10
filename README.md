@@ -1,5 +1,7 @@
 # Setup
 
+Tested on postgresql 12.1.
+
 Make sure it runs without errors
 ```shell
 ./config.sh install
@@ -10,11 +12,16 @@ Start psql service
 brew services start postgresql
 ```
 
-Edit `config.sh` file and adjust to your setup.
+Copy `config-local-example.sh` to `config-local.sh` file and adjust to your setup.
 
-Create DB
+Create DB and activate extensions
 ```shell
 ./config.sh init-db
+./config.sh activate-ext
+```
+
+Update db tables for script generation:
+```shell
 ./config.sh config
 ```
 
@@ -36,7 +43,7 @@ Load state data for California:
 bash script/ca_state_loader.sh
 ```
 
-Cleanup: create missing indixes and vacuum tables
+Cleanup: create missing indexes and vacuum tables
 ```shell
 ./config.sh final
 ```
