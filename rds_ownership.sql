@@ -7,3 +7,7 @@ SELECT exec('ALTER TABLE ' || quote_ident(s.nspname) || '.' || quote_ident(s.rel
     WHERE nspname in ('tiger','topology') AND
     relkind IN ('r','S','v') ORDER BY relkind = 'S')
 s;
+
+ALTER SCHEMA tiger OWNER TO CURRENT_USER;
+ALTER SCHEMA tiger_data OWNER TO CURRENT_USER;
+ALTER ROLE CURRENT_USER SET search_path TO public,tiger;

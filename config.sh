@@ -79,7 +79,7 @@ use_www() {
 }
 
 test_zips() {
-  find . -name '*.zip' -exec unzip -q -t {} \;
+  find ./$WWW_HOST -name '*.zip' -exec unzip -q -t {} \;
 }
 
 gen_nation() {
@@ -99,6 +99,10 @@ gen_ma() {
 # Generate loader for CA,MA,NY,TX
 gen_4() {
   ${PSQL} -c "SET search_path=public,tiger;SELECT Loader_Generate_Script(ARRAY['CA','MA','NY','TX'], 'sh')" -d $DB -tA > script/4_state_loader.sh
+}
+
+run_4() {
+  cat script/4_state_loader.sh | ./batch_wget.rb | bash
 }
 
 rds_ownership() {
