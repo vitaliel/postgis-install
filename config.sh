@@ -16,6 +16,7 @@ DISTRICT_EC=116
 test -e config-local.sh && source config-local.sh
 
 PSQL=${PGBIN}/psql
+PGDATABASE=$DB
 
 export PGBIN
 export PGPORT
@@ -26,6 +27,8 @@ export PGDATABASE
 
 WWW_HOST=www2.census.gov
 FTP_HOST=ftp2.census.gov
+
+source ./utils.sh
 
 install() {
   brew install postgis
@@ -86,23 +89,13 @@ gen_nation() {
   ${PSQL} -c "SELECT Loader_Generate_Nation_Script('sh')" -d $DB -tA >script/nation_loader.sh
 }
 
-# Generate loader for California
-gen_ca() {
-  psql -c "SELECT Loader_Generate_Script(ARRAY['CA'], 'sh')" -d $DB -tA > script/ca_state_loader.sh
-}
-
-# Generate loader for Massachusetts
-gen_ma() {
-  ${PSQL} -c "SELECT Loader_Generate_Script(ARRAY['MA'], 'sh')" -d $DB -tA > script/ma_state_loader.sh
-}
-
-# Generate loader for CA,MA,NY,TX
-gen_4() {
-  ${PSQL} -c "SET search_path=public,tiger;SELECT Loader_Generate_Script(ARRAY['CA','MA','NY','TX'], 'sh')" -d $DB -tA > script/4_state_loader.sh
-}
-
-run_4() {
-  cat script/4_state_loader.sh | ./batch_wget.rb | bash
+# Generate loader for state and run import
+import_state() {
+  state_code=$1
+  script=script/${state_code}_state_loader.sh
+  mkdir -p ./script
+  ${PSQL} -c "SELECT Loader_Generate_Script(ARRAY['$state_code'], 'sh')" -d $DB -tA > "$script"
+  cat "$script" | ./batch_wget.rb | bash
 }
 
 rds_ownership() {
@@ -122,11 +115,12 @@ import_districts() {
   fi
   rm -f ${TMPDIR}/*.*
   unzip -o -d $TMPDIR $arc_path
-
+  cd ${TMPDIR}
   ${SHP2PGSQL} -D -c -s 4269 -g the_geom -W "latin1" \
     $file_name.dbf tiger_data.districts | ${PSQL}
   ${PSQL} -c "CREATE INDEX tiger_data_districts_the_geom_gist ON tiger_data.districts USING gist(the_geom);"
-  ${PSQL} -c "VACUUM ANALYZE tiger_data.districts"
+  ${PSQL} -c "ALTER TABLE tiger_data.districts RENAME cd{DISTRICT_EC}fp TO cdfp;"
+  ${PSQL} -c "VACUUM ANALYZE tiger_data.districts;"
 }
 
 console() {
@@ -134,7 +128,7 @@ console() {
 }
 
 final() {
-  psql $DB -f final.sql
+  ${PSQL} $DB -f final.sql
 }
 
 case "$1" in
@@ -164,17 +158,11 @@ case "$1" in
     gen_nation
     ;;
 
-  gen-ca)
-    gen_ca
+  import-state)
+    state_code=$(str_upper "$2")
+    import_state "$state_code"
     ;;
 
-  gen-ma)
-    gen_ma
-    ;;
-
-  gen-4)
-    gen_4
-    ;;
   import-districts)
     import_districts
     ;;
@@ -190,6 +178,7 @@ case "$1" in
     ;;
 *)
   echo commands: config use-ftp use-www test-zips
+  echo $0 import-state ca
   ;;
 esac
 

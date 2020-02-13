@@ -18,22 +18,26 @@ Generate nation script and run it:
 bash script/nation_loader.sh
 ```
 
+Fix permissions
+```shell
+./config.sh rds-ownership
+```
+
 Make sure it works:
 ```sql
-SET search_path=public,tiger;
-
 SELECT na.address, na.streetname,na.streettypeabbrev, na.zip
 FROM normalize_address('1 Devonshire Place, Boston, MA 02109') AS na;
 ```
 
-Load state data for CA,MA,NY,TX:
+Load state data for CA,MA, etc:
 ```shell
-./config.sh gen-4
-bash script/4_state_loader.sh
+./config.sh import-state ca
+./config.sh import-state ma
 ```
 
+Load congressional districts
+```shell
+./config.sh import-districts
+```
 
-
-
-
-(Amazon Instructions)[https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/Appendix.PostgreSQL.CommonDBATasks.html#Appendix.PostgreSQL.CommonDBATasks.PostGIS]
+[Amazon Instructions](https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/Appendix.PostgreSQL.CommonDBATasks.html#Appendix.PostgreSQL.CommonDBATasks.PostGIS)

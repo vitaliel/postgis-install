@@ -13,7 +13,7 @@ def extract_url(line)
 end
 
 def wget_generate(urls)
-  url_file_path = "temp/urls.txt"
+  url_file_path = "temp/urls"
 
   parsed_uri = URI.parse(urls[0])
   base = "#{parsed_uri.scheme}://#{parsed_uri.host}"
