@@ -43,7 +43,7 @@ def lftp_generate(urls)
     out.puts(cmds.join("\n"))
   end
 
-  "lftp -f #{script_file}"
+  "lftp -f #{script_file} || exit 1"
 end
 
 while line = STDIN.gets
