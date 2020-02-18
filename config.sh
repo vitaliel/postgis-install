@@ -31,7 +31,7 @@ FTP_HOST=ftp2.census.gov
 source ./utils.sh
 
 install() {
-  brew install postgis
+  brew install postgis lftp
 }
 
 init_db() {
