@@ -64,15 +64,16 @@ cd \${staging_fold}
 where os='sh';
 EOF
 
-  ${PSQL} $DB -f temp/config.sql
-  ${PSQL} $DB -c "update tiger.loader_variables set staging_fold='$PWD'"
+  ${PSQL} -f temp/config.sql
+  ${PSQL} -c "update tiger.loader_variables set staging_fold='$PWD'"
   mkdir -p $WWW_HOST
   ln -s $WWW_HOST $FTP_HOST
   use_ftp
 }
 
 use_ftp() {
-  ${PSQL} $DB -c "update tiger.loader_variables set website_root='ftp://$FTP_HOST/geo/tiger/TIGER' || (select tiger_year from tiger.loader_variables limit 1);"
+  ${PSQL} -c "update tiger.loader_variables set tiger_year=$TIGER_YEAR"
+  ${PSQL} -c "update tiger.loader_variables set website_root='ftp://$FTP_HOST/geo/tiger/TIGER' || (select tiger_year from tiger.loader_variables limit 1);"
 }
 
 use_www() {
@@ -116,15 +117,35 @@ import_districts() {
   rm -f ${TMPDIR}/*.*
   unzip -o -d $TMPDIR $arc_path
   cd ${TMPDIR}
+  ${PSQL} -c "DROP SCHEMA IF EXISTS tiger_staging CASCADE;"
+  ${PSQL} -c "CREATE SCHEMA tiger_staging;"
   ${SHP2PGSQL} -D -c -s 4269 -g the_geom -W "latin1" \
-    $file_name.dbf tiger_data.districts | ${PSQL}
+    $file_name.dbf tiger_staging.districts | ${PSQL}
+  ${PSQL} -c "ALTER TABLE tiger_staging.districts RENAME cd${DISTRICT_EC}fp TO cdfp;"
+  ${PSQL} -c "INSERT INTO tiger_data.districts SELECT * FROM tiger_staging.districts;"
   ${PSQL} -c "CREATE INDEX tiger_data_districts_the_geom_gist ON tiger_data.districts USING gist(the_geom);"
-  ${PSQL} -c "ALTER TABLE tiger_data.districts RENAME cd{DISTRICT_EC}fp TO cdfp;"
   ${PSQL} -c "VACUUM ANALYZE tiger_data.districts;"
 }
 
 console() {
   ${PSQL} $DB
+}
+
+download_all() {
+  script_file=$TMPDIR/lftp_all
+  echo open $FTP_HOST >$script_file
+  folders="PLACE COUSUB TRACT FACES FEATNAMES EDGES ADDR"
+  for f in $folders
+  do
+    echo local mkdir -p $FTP_HOST/geo/tiger/TIGER${TIGER_YEAR}/$f >>$script_file
+  done
+  echo set cmd:parallel 5 >>$script_file
+  for f in $folders
+  do
+    echo mirror /geo/tiger/TIGER${TIGER_YEAR}/$f/ $FTP_HOST/geo/tiger/TIGER${TIGER_YEAR}/$f/ >>$script_file
+  done
+
+  lftp -f "$script_file"
 }
 
 final() {
@@ -145,7 +166,9 @@ case "$1" in
   config)
     config
     ;;
-
+  download-all)
+    download_all
+    ;;
   use-ftp)
     use_ftp
     ;;
