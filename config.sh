@@ -68,11 +68,12 @@ EOF
   ${PSQL} -c "update tiger.loader_variables set staging_fold='$PWD'"
   mkdir -p $WWW_HOST
   ln -s $WWW_HOST $FTP_HOST
+  ${PSQL} -c "update tiger.loader_variables set tiger_year=$TIGER_YEAR"
+  ${PSQL} -c "UPDATE tiger.loader_lookuptables SET load = true WHERE table_name = 'zcta510';"
   use_ftp
 }
 
 use_ftp() {
-  ${PSQL} -c "update tiger.loader_variables set tiger_year=$TIGER_YEAR"
   ${PSQL} -c "update tiger.loader_variables set website_root='ftp://$FTP_HOST/geo/tiger/TIGER' || (select tiger_year from tiger.loader_variables limit 1);"
 }
 
